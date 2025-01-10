@@ -1,8 +1,5 @@
 import bpy
 from math import sin, cos, pi
-def blop(count=1):
-    for i in range( count ):
-        print('blop')
 
 def clear():
     #clear stage
