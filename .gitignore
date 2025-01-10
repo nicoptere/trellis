@@ -1,4 +1,8 @@
 ply_render.blend
+trellis-dev.blend
 *.blend1
+*.pickle
+*.ply
+*.glb
 models
 __pychache__
