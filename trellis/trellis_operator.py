@@ -48,8 +48,12 @@ def displayPLY( model_name ):
     geom_node = mesh.modifiers.new('geom_node',type='NODES')
 
     #Create a pointer to the node tree
-    tree = bpy.data.node_groups[0] # TODO get by name
-
+    tree = bpy.data.node_groups[0]
+    group = bpy.data.node_groups
+    for g in group:
+        if g.name == "ply_geom_node":
+            tree = g
+        
     #Set that tree to your modifier
     mesh.modifiers['geom_node'].node_group = tree
 
@@ -76,7 +80,7 @@ class ComputeOperator(bpy.types.Operator):
 
         # add an image placeholder
         clear()
-        bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 2, 3), rotation=(1.5708, 0, 0), scale=(1, 1, 1))
+        bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 3, 2.5), rotation=(1.5708, 0, 0), scale=(1, 1, 1))
         
         #send image ref to TRELLIS
         json_data = {
@@ -118,7 +122,7 @@ class DiscretizeOperator(bpy.types.Operator):
 
         # add an image placeholder
         clear()
-        bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 2, 3), rotation=(1.5708, 0, 0), scale=(1, 1, 1))
+        bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 3, 2.5), rotation=(1.5708, 0, 0), scale=(1, 1, 1))
         
         #send image ref to TRELLIS
         json_data = {
