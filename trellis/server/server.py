@@ -11,7 +11,12 @@ from easydict import EasyDict as edict
 from typing import Tuple
 from flask import Flask, request
 
-from trellis.representations import Gaussian, Strivec, MeshExtractResult
+from trellis.representations import Gaussian, MeshExtractResult
+from trellis.utils import postprocessing_utils
+
+# pipeline instance
+pipeline = None
+
 def pack_state(gs: Gaussian, mesh: MeshExtractResult, trial_id: str) -> dict:
     return {
         'gaussian': {
@@ -81,7 +86,9 @@ def process( img, params = None ):
     print( 'computing SLAT' )
     # Load an image
     image = Image.open(img)
+
     # Run the pipeline
+    global pipeline
     outputs = pipeline.run(
         image,
         # Optional parameters
@@ -109,7 +116,7 @@ def process( img, params = None ):
 
 
 def optimize( img, params = None ):
-
+    
     # file names
     name = os.path.splitext(img)[0]
     pickle_file = '%s.pickle' % name
@@ -121,8 +128,10 @@ def optimize( img, params = None ):
     print( 'processing params:', params )
 
     # (debug) bail out if model not initialized 
+    global pipeline
     if pipeline is None:
         return glb_file
+    
     if  params is None:
         params = {
             'slat': {
@@ -161,11 +170,23 @@ def optimize( img, params = None ):
     return glb_file
 
 
-# server
+# server 
+
+def checkInitialization():
+    global pipeline
+    
+    if pipeline == None:    
+        from trellis.pipelines import TrellisImageTo3DPipeline
+        pipeline = TrellisImageTo3DPipeline.from_pretrained("JeffreyXiang/TRELLIS-image-large")
+        pipeline.cuda()
+
 
 app = Flask(__name__)
 @app.route('/compute', methods=['GET', 'POST'])
 def compute():
+    
+    checkInitialization()
+
     # parse arguments received from Blender
     values = request.get_json()
     image = values['image']
@@ -176,6 +197,9 @@ def compute():
 
 @app.route('/discretize', methods=['GET', 'POST'])
 def discretize():
+
+    checkInitialization()
+
     # parse arguments received from Blender
     values = request.get_json()
     image = values['image']
@@ -185,14 +209,8 @@ def discretize():
     return {"value":model}, 200
 
 
-pipeline = None
 if __name__ == "__main__":
     
-    from trellis.utils import render_utils, postprocessing_utils
-    from trellis.pipelines import TrellisImageTo3DPipeline
-    pipeline = TrellisImageTo3DPipeline.from_pretrained("JeffreyXiang/TRELLIS-image-large")
-    pipeline.cuda()
-
     app.run(host="127.0.0.1", port=8080, debug=True)
 
 
