@@ -13,6 +13,7 @@ this means you need a beefy GPU with a minimum of 16Go VRAM and CUDA installed.
 ## how to
 
 install the Blender add-on from the **edit > preferences > addons menu**, choose install from disk and select the trellis.zip file. 
+
 ![install](doc/install.png)
 
 then activate it if it doesn't start automatically. the panel is available below the **'item', 'tool' 'view'** tools
