@@ -1,0 +1,198 @@
+import os
+os.environ['ATTN_BACKEND'] = 'xformers'   # Can be 'flash-attn' or 'xformers', default is 'flash-attn'
+os.environ['SPCONV_ALGO'] = 'native'        # Can be 'native' or 'auto', default is 'auto'.
+                                            # 'auto' is faster but will do benchmarking at the beginning.
+                                            # Recommended to set to 'native' if run only once.
+import pickle
+import torch
+from PIL import Image
+
+from easydict import EasyDict as edict
+from typing import Tuple
+from flask import Flask, request
+
+from trellis.representations import Gaussian, Strivec, MeshExtractResult
+def pack_state(gs: Gaussian, mesh: MeshExtractResult, trial_id: str) -> dict:
+    return {
+        'gaussian': {
+            **gs.init_params,
+            '_xyz': gs._xyz.cpu().numpy(),
+            '_features_dc': gs._features_dc.cpu().numpy(),
+            '_scaling': gs._scaling.cpu().numpy(),
+            '_rotation': gs._rotation.cpu().numpy(),
+            '_opacity': gs._opacity.cpu().numpy(),
+        },
+        'mesh': {
+            'vertices': mesh.vertices.cpu().numpy(),
+            'faces': mesh.faces.cpu().numpy(),
+        },
+        'trial_id': trial_id,
+    }
+    
+    
+def unpack_state(state: dict) -> Tuple[Gaussian, edict, str]:
+    gs = Gaussian(
+        aabb=state['gaussian']['aabb'],
+        sh_degree=state['gaussian']['sh_degree'],
+        mininum_kernel_size=state['gaussian']['mininum_kernel_size'],
+        scaling_bias=state['gaussian']['scaling_bias'],
+        opacity_bias=state['gaussian']['opacity_bias'],
+        scaling_activation=state['gaussian']['scaling_activation'],
+    )
+    gs._xyz = torch.tensor(state['gaussian']['_xyz'], device='cuda')
+    gs._features_dc = torch.tensor(state['gaussian']['_features_dc'], device='cuda')
+    gs._scaling = torch.tensor(state['gaussian']['_scaling'], device='cuda')
+    gs._rotation = torch.tensor(state['gaussian']['_rotation'], device='cuda')
+    gs._opacity = torch.tensor(state['gaussian']['_opacity'], device='cuda')
+    
+    mesh = edict(
+        vertices=torch.tensor(state['mesh']['vertices'], device='cuda'),
+        faces=torch.tensor(state['mesh']['faces'], device='cuda'),
+    )
+    
+    return gs, mesh, state['trial_id']
+
+
+# todo pass params
+def process( img, params = None ):
+
+    # file names
+    name = os.path.splitext(img)[0]
+    ply_file = '%s.ply' % name
+    if os.path.exists( ply_file ) == True:
+        return ply_file
+    
+    pickle_file = '%s.pickle' % name
+
+    gaussian = None
+    mesh = None
+    if  params is None:
+        params = {
+            'slat': {
+                    'sparse': {'steps': 12, 'cfg_strength': 8.0}, 
+                    'slat': {'steps': 10, 'cfg_strength': 5.0}}, 
+            'glb': {
+                'simplify': 0.800000011920929, 'texture_size': 1024
+                }
+            }
+
+    print( 'processing name:', name )
+    print( 'processing params:', params )
+    print( 'computing SLAT' )
+    # Load an image
+    image = Image.open(img)
+    # Run the pipeline
+    outputs = pipeline.run(
+        image,
+        # Optional parameters
+        seed=1,
+        sparse_structure_sampler_params={
+            "steps": params.slat.sparse.steps,
+            "cfg_strength": params.slat.sparse.cfg_strength,
+        },
+        slat_sampler_params={
+            "steps": params.slat.slat.steps,
+            "cfg_strength": params.slat.slat.cfg_strength,
+        },
+    )
+    # save Gaussian Splat model
+    print( '\t SLAT computed, saving GAUSSIAN SPLAT model under:', ply_file)
+    gaussian = outputs['gaussian'][0]
+    mesh = outputs['mesh'][0]
+    gaussian.save_ply(ply_file) 
+    
+    # save intermediate state
+    print( '\t SLAT computed, saving pickled model under:', pickle_file )
+    content = pack_state( gaussian, mesh, "1" )
+    pickle.dump(content, open( pickle_file, "wb" ) )
+    return ply_file
+
+
+def optimize( img, params = None ):
+
+    # file names
+    name = os.path.splitext(img)[0]
+    pickle_file = '%s.pickle' % name
+    glb_file = "%s.glb" % name
+    if os.path.exists( glb_file ) == True:
+        return glb_file
+
+    print( 'processing name:', name )
+    print( 'processing params:', params )
+
+    # (debug) bail out if model not initialized 
+    if pipeline is None:
+        return glb_file
+    if  params is None:
+        params = {
+            'slat': {
+                    'sparse': {'steps': 12, 'cfg_strength': 8.0}, 
+                    'slat': {'steps': 10, 'cfg_strength': 5.0}}, 
+            'glb': {
+                'simplify': 0.800000011920929, 'texture_size': 1024
+                }
+            }
+
+    gaussian = None
+    mesh = None
+
+    # check if the pickle file exists
+    if os.path.exists( pickle_file ) == False:
+
+        # if not create it
+        print( 'need to compute the SLAT first' )
+        process(img, params)
+    
+    raw = pickle.load( open( pickle_file, "rb" ) )
+    outputs = unpack_state( raw )
+    gaussian = outputs[0]
+    mesh = outputs[1]
+
+    # GLB files can be extracted from the outputs
+    if os.path.exists( glb_file ) == False:
+        glb = postprocessing_utils.to_glb(
+            gaussian,
+            mesh,
+            simplify=params.glb.simplify,          # Ratio of triangles to remove in the simplification process
+            texture_size=params.glb.texture_size,      # Size of the texture used for the GLB
+        )
+        glb.export(glb_file)
+
+    return glb_file
+
+
+# server
+
+app = Flask(__name__)
+@app.route('/compute', methods=['GET', 'POST'])
+def compute():
+    # parse arguments received from Blender
+    values = request.get_json()
+    image = values['image']
+    params = edict( values["params"] )
+    # compute
+    model = process( image, params )
+    return {"value":model}, 200
+
+@app.route('/discretize', methods=['GET', 'POST'])
+def discretize():
+    # parse arguments received from Blender
+    values = request.get_json()
+    image = values['image']
+    params = edict( values["params"] )
+    # compute
+    model = optimize( image, params )
+    return {"value":model}, 200
+
+
+pipeline = None
+if __name__ == "__main__":
+    
+    from trellis.utils import render_utils, postprocessing_utils
+    from trellis.pipelines import TrellisImageTo3DPipeline
+    pipeline = TrellisImageTo3DPipeline.from_pretrained("JeffreyXiang/TRELLIS-image-large")
+    pipeline.cuda()
+
+    app.run(host="127.0.0.1", port=8080, debug=True)
+
+

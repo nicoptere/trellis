@@ -1,0 +1,5 @@
+*.zip
+ply_render.blend
+*.blend1
+models
+__pychache__
