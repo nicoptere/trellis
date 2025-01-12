@@ -1,6 +1,7 @@
 import bpy
 import requests
 import os 
+from math import pi
 from .utils import resetStage, clear
 
 def getParams( context ):
@@ -21,7 +22,21 @@ def getParams( context ):
                     }
                 }
 
-def displayPLY( model_name ):
+def placeModel( context, object ):
+
+    gizmo = context.window_manager.gizmo
+    object.scale *= 4
+    object.location[2] = 2
+    if gizmo is not None:
+        # context.window_manager.gizmo
+        s = gizmo.empty_display_size
+        object.location = gizmo.location
+        object.rotation_euler = gizmo.rotation_euler
+        object.rotation_euler[0] -= pi /2
+
+        object.scale = (s,s,s)
+
+def displayPLY( context, model_name ):
 
     name, ext = os.path.splitext( os.path.basename(model_name) )
 
@@ -38,8 +53,7 @@ def displayPLY( model_name ):
     bpy.ops.geometry.color_attribute_add(name="Color")
 
     # upscale & translate model
-    bpy.context.object.scale *= 4
-    bpy.context.object.location[2] = 2
+    placeModel( context, bpy.context.object )
 
     # store ref to mesh   
     mesh = bpy.data.objects[name]
@@ -60,93 +74,106 @@ def displayPLY( model_name ):
     #set the "Color" attribute as the output of the Geometry node
     geom_node["Socket_2_attribute_name"] = "Color"
 
+def displayGLB( context, model ):
+    
+    name  = os.path.basename(model)
+
+    # receive result
+    bpy.ops.import_scene.gltf(filepath=model, files=[{"name":name, "name":name}], loglevel=20)
+
+    # upscale & translate model
+    placeModel( context, bpy.context.object )
+
+def sanitizePath(context):    
+    image_path = None
+    try:
+        image_path = context.window_manager.image.filepath
+    except:
+        print( 'file name is empty')
+        return None
+    image_path = bpy.path.abspath(os.path.join(image_path))
+    return image_path
+
+def displayImagePreview(image_path):
+    clear()
+    bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 3, 2.5), rotation=(1.5708, 0, 0), scale=(1, 1, 1))
+    
 
 class ComputeOperator(bpy.types.Operator):
     bl_idname = "object.compute"
-    bl_label = "compute"
+    bl_label = "compute SLAT"
    
     def execute(self, context):
-        image_path = None
-        try:
-            image_path = context.window_manager.image.filepath
-        except:
-            print( 'file name is empty')
-        
+        # get image path
+        image_path = sanitizePath(context)
         if image_path is None:
             return {"FINISHED"}
-        
-        image_path = bpy.path.abspath(os.path.join(image_path))
         print( "TRELLIS compute", image_path )
 
         # add an image placeholder
-        clear()
-        bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 3, 2.5), rotation=(1.5708, 0, 0), scale=(1, 1, 1))
-        
-        #send image ref to TRELLIS
-        json_data = {
-            "image": image_path,
-            "params": getParams(context)
-        }
-        response = requests.post('http://localhost:8080/compute', json=json_data)
-        
-        if response.status_code == 200:
+        # displayImagePreview(image_path)
 
-            # display the result
-            model = response.json()["value"]
+        # check if file already exists        
+        name = os.path.splitext(image_path)[0]
+        model = "%s.ply" % name
+        if os.path.exists(model):            
             resetStage()
-            displayPLY( model )
-
+            displayPLY( context, model )
             return {"FINISHED"}
-
         else:
-            print('something went wrong:', response.status_code)
-        return {"FINISHED"}
+            #send image ref to TRELLIS
+            json_data = {
+                "image": image_path,
+                "params": getParams(context)
+            }
+            response = requests.post('http://localhost:8080/compute', json=json_data)
+            
+            if response.status_code == 200:
+                # display the result
+                model = response.json()["value"]
+                resetStage()
+                displayPLY( context, model )
+                return {"FINISHED"}
+            else:
+                print('something went wrong:', response.status_code)
+            return {"FINISHED"}
         
 
 class DiscretizeOperator(bpy.types.Operator):
     bl_idname = "object.discretize"
-    bl_label = "discretize"
+    bl_label = "discretize SLAT model"
     
     def execute(self, context):
-        image_path = None
-        try:
-            image_path = context.window_manager.image.filepath
-        except:
-            print( 'file name is empty')
-        
+        # get image path
+        image_path = sanitizePath(context)
         if image_path is None:
             return {"FINISHED"}
-        
-        image_path = bpy.path.abspath(os.path.join(image_path))
         print( "TRELLIS discretize", image_path )
 
         # add an image placeholder
-        clear()
-        bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 3, 2.5), rotation=(1.5708, 0, 0), scale=(1, 1, 1))
-        
-        #send image ref to TRELLIS
-        json_data = {
-            "image": image_path,
-            "params": getParams(context)
-        }
-        response = requests.post('http://localhost:8080/discretize', json=json_data)
-        
-        if response.status_code == 200:
+        # displayImagePreview(image_path)
 
+        # check if file already exists        
+        name = os.path.splitext(image_path)[0]
+        model = "%s.glb" % name
+        if os.path.exists(model):            
             resetStage()
-            
-            model = response.json()["value"]
-            name  = os.path.basename(model)
-
-            # receive result
-            bpy.ops.import_scene.gltf(filepath=model, files=[{"name":name, "name":name}], loglevel=20)
-
-            # upscale & translate model
-            bpy.context.object.scale *= 4
-            bpy.context.object.location[2] = 2
-
+            displayGLB( context, model )
             return {"FINISHED"}
-
         else:
-            print('something went wrong:', response.status_code)
-        return {"FINISHED"}
+            #send image ref to TRELLIS
+            json_data = {
+                "image": image_path,
+                "params": getParams(context)
+            }
+            response = requests.post('http://localhost:8080/discretize', json=json_data)
+            if response.status_code == 200:
+
+                model = response.json()["value"]
+                resetStage()
+                displayGLB( context, model )
+                return {"FINISHED"}
+
+            else:
+                print('something went wrong:', response.status_code)
+            return {"FINISHED"}

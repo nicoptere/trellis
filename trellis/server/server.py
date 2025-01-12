@@ -6,7 +6,7 @@ os.environ['SPCONV_ALGO'] = 'native'        # Can be 'native' or 'auto', default
 import pickle
 import torch
 from PIL import Image
-
+import time
 from easydict import EasyDict as edict
 from typing import Tuple
 from flask import Flask, request
@@ -170,21 +170,29 @@ def optimize( img, params = None ):
     return glb_file
 
 
-# server 
 
 def checkInitialization():
     global pipeline
-    
     if pipeline == None:    
         from trellis.pipelines import TrellisImageTo3DPipeline
         pipeline = TrellisImageTo3DPipeline.from_pretrained("JeffreyXiang/TRELLIS-image-large")
         pipeline.cuda()
 
 
+# server 
+
 app = Flask(__name__)
+
+@app.route('/check', methods=['GET', 'POST'])
+def check():
+    values = request.get_json()
+    print( "received", values['value'] )
+    
+    print( "finished" )
+    return  {"value": 'ok'}, 200
+
 @app.route('/compute', methods=['GET', 'POST'])
 def compute():
-    
     checkInitialization()
 
     # parse arguments received from Blender
@@ -197,7 +205,6 @@ def compute():
 
 @app.route('/discretize', methods=['GET', 'POST'])
 def discretize():
-
     checkInitialization()
 
     # parse arguments received from Blender
@@ -208,9 +215,10 @@ def discretize():
     model = optimize( image, params )
     return {"value":model}, 200
 
+def runServer():
+    app.run(host="127.0.0.1", port=8080, debug=True)
 
 if __name__ == "__main__":
-    
-    app.run(host="127.0.0.1", port=8080, debug=True)
+    runServer()
 
 

@@ -1,11 +1,8 @@
 bl_info = {
     "name": "Trellis",
-    "blender": (4, 3, 1),
+    "blender": (3, 0, 0),
     "category": "Object",
 }
-
-# import addon_utils
-# print(addon_utils.paths())
 
 if "bpy" in locals():
     import importlib
@@ -26,20 +23,21 @@ import bpy
 # properties 
 # https://blender.stackexchange.com/posts/278152/revisions
 
-from bpy.types import WindowManager, Scene, Image
+from bpy.types import WindowManager, Scene, Image, Object
 from bpy.props import FloatProperty, IntProperty, PointerProperty
 
-#  TODO 
+#  TODO use a image on drag drop
 
 # sparse & SLAT 
-WindowManager.sparse_steps = IntProperty(name="steps", default=10, min=1, max=100)
-WindowManager.sparse_strength = FloatProperty(name="strength", default=8, min=0, max=50, step=0.1)
-WindowManager.slat_steps = IntProperty(name="steps", default=10, min=1, max=100)
-WindowManager.slat_strength = FloatProperty(name="strength", default=5, min=0, max=50, step=0.1)
+WindowManager.sparse_steps = IntProperty(name="steps", default=12, min=1, max=100)
+WindowManager.sparse_strength = FloatProperty(name="strength", default=7.5, min=0, max=50, step=0.1)
+
+WindowManager.slat_steps = IntProperty(name="steps", default=12, min=1, max=100)
+WindowManager.slat_strength = FloatProperty(name="strength", default=3, min=0, max=50, step=0.1)
 
 # GLB optimization settings
-WindowManager.simplify = FloatProperty(name="simplfication", default=0.8, min=0, max=1, step=0.01)
-WindowManager.texture_size = IntProperty(name="texture size", default=2048, min=64, max=8192, step=1)
+WindowManager.simplify = FloatProperty(name="simplfication", default=0.95, min=0, max=1, step=0.01)
+WindowManager.texture_size = IntProperty(name="texture size", default=1024, min=64, max=8192, step=1)
 
 class TRELLIS(bpy.types.Panel):
     
@@ -62,9 +60,12 @@ class TRELLIS(bpy.types.Panel):
         # computation settings
         layout.label(text="SLAT settings")
         
+        layout.label(text="sparse")
         row = layout.row()
         row.prop(context.window_manager, "sparse_steps")
         row.prop(context.window_manager, "sparse_strength")
+
+        layout.label(text="SLAT")
         row = layout.row()
         row.prop(context.window_manager, "slat_steps")
         row.prop(context.window_manager, "slat_strength")
@@ -93,22 +94,67 @@ class TRELLIS(bpy.types.Panel):
         row = layout.row(align=True)
         row.operator("render.render")
 
+# Empty image panel 
+class ImagePanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_process"
+    bl_label = "TRELLIS"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    # bl_options = {'DEFAULT_CLOSED'}
+    bl_context = "data"
+
+    @classmethod
+    def poll(cls, context):
+        return (context.object is not None)
+
+    def checkGizmo(self, context):
+        gizmo = bpy.context.view_layer.objects.active
+        if hasattr(gizmo, "data"):
+            if hasattr(gizmo.data, "filepath" ):
+                return gizmo
+        return None
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="Panel")
+
+    def draw(self, context):
+        
+        layout = self.layout
+        gizmo = self.checkGizmo(context) 
+        if gizmo is not None:
+            
+            context.window_manager.gizmo  = gizmo
+            context.window_manager.image  = gizmo.data
+
+
+            # box = layout.box()
+            # image_path = context.window_manager.image.filepath
+            # box.label(text="image: " + image_path)
+            # box.operator("object.compute")
+            # box.operator("object.discretize")
+        
+     
+
+
+
 def register():
-    print( 'hello')
     WindowManager.image = PointerProperty(name="image", type=Image)
+    WindowManager.gizmo = PointerProperty(name="gizmo", type=Object)
     bpy.utils.register_class(ComputeOperator)
     bpy.utils.register_class(DiscretizeOperator)
     bpy.utils.register_class(TRELLIS)
-    
+    bpy.utils.register_class(ImagePanel)
     
 
 def unregister():
-    print( 'goodbye')
     bpy.utils.unregister_class(ComputeOperator)
     bpy.utils.unregister_class(DiscretizeOperator)
     bpy.utils.unregister_class(TRELLIS)
+    bpy.utils.unregister_class(ImagePanel)
     del WindowManager.image 
+    del WindowManager.gizmo 
 
 if __name__ == "__main__":
-    print( "calling main" ) 
+    print( "calling TRELLIS main" ) 
     register()
