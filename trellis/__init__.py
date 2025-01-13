@@ -26,8 +26,6 @@ import bpy
 from bpy.types import WindowManager, Scene, Image, Object
 from bpy.props import FloatProperty, IntProperty, PointerProperty
 
-#  TODO use a image on drag drop
-
 # sparse & SLAT 
 WindowManager.sparse_steps = IntProperty(name="steps", default=12, min=1, max=100)
 WindowManager.sparse_strength = FloatProperty(name="strength", default=7.5, min=0, max=50, step=0.1)
@@ -48,51 +46,42 @@ class TRELLIS(bpy.types.Panel):
     bl_category = "TRELLIS"
 
     def draw(self, context):
+        
         layout = self.layout
         
-        # select image button
+        # image browser
         layout.label(text="select an image")
         row = layout.row()
         layout.template_ID(context.window_manager, "image", open="image.open")
     
-        # COMPUTE
-
-        # computation settings
-        layout.label(text="SLAT settings")
+        # SLAT computation: convert image to point cloud
+        layout.label(text="point cloud")
+        box = layout.box()
         
-        layout.label(text="sparse")
-        row = layout.row()
+        box.label(text="sparse")
+        row = box.row()
         row.prop(context.window_manager, "sparse_steps")
         row.prop(context.window_manager, "sparse_strength")
-
-        layout.label(text="SLAT")
-        row = layout.row()
+        
+        box.label(text="SLAT")
+        row = box.row()
         row.prop(context.window_manager, "slat_steps")
         row.prop(context.window_manager, "slat_strength")
-
-        # compute SLAT model
-        row = layout.row(align=True)
-        row.scale_y = 1.0
-        row.operator("object.compute")
-
-
-        # DISCRETIZE 
         
-        # discretization settings
+        row = box.row(align=True)
+        row.operator("object.compute")
+        
+        # discretize SLAT model (convert point cloud to textured GLB)
         layout.label(text="discretize")
-        row = layout.row()
+        box = layout.box()
+        row = box.row()
         row.prop(context.window_manager, "simplify")
-        row = layout.row()
+        row = box.row()
         row.prop(context.window_manager, "texture_size")
         
-        # discretize SLAT model (convert to textured GLB)
-        row = layout.row(align=True)
-        row.scale_y = 1.0
+        row = box.row(align=True)
         row.operator("object.discretize")
 
-        # call render
-        row = layout.row(align=True)
-        row.operator("render.render")
 
 # Empty image panel 
 class ImagePanel(bpy.types.Panel):
@@ -133,10 +122,7 @@ class ImagePanel(bpy.types.Panel):
             # box.label(text="image: " + image_path)
             # box.operator("object.compute")
             # box.operator("object.discretize")
-        
-     
-
-
+            
 
 def register():
     WindowManager.image = PointerProperty(name="image", type=Image)
