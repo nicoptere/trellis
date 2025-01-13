@@ -23,18 +23,18 @@ def getParams( context ):
                 }
 
 def placeModel( context, object ):
-
     gizmo = context.window_manager.gizmo
-    object.scale *= 4
-    object.location[2] = 2
+    object.scale *= 2
+    object.location[2] = 1
     if gizmo is not None:
-        # context.window_manager.gizmo
         s = gizmo.empty_display_size
         object.location = gizmo.location
+        object.rotation_mode = 'XYZ'
         object.rotation_euler = gizmo.rotation_euler
         object.rotation_euler[0] -= pi /2
-
         object.scale = (s,s,s)
+        # reset position 
+        context.window_manager.gizmo = None
 
 def displayPLY( context, model_name ):
 
@@ -77,12 +77,39 @@ def displayPLY( context, model_name ):
 def displayGLB( context, model ):
     
     name  = os.path.basename(model)
+    objects = bpy.data.objects
+    meshes = bpy.data.meshes
 
     # receive result
     bpy.ops.import_scene.gltf(filepath=model, files=[{"name":name, "name":name}], loglevel=20)
 
+    world = bpy.context.view_layer.objects.active
+    objects.remove(world, do_unlink=True)
+    bpy.ops.object.parent_clear(type='CLEAR')
+
+    # find the mesh and rename it's geometry
+    mesh = None
+    for obj in objects:
+        if obj.name == "geometry_0":
+            obj.name = name
+            meshes[ "geometry_0" ].name = name
+            mesh = obj
+            mat = mesh.data.materials[0]
+            bpy.data.images["Image_0"].name = "Image_"+name
+            break
+    
+    # assign custom shader 
+    mesh.data.materials.clear()
+    mat = bpy.data.materials.get("direct_diffuse").copy()
+    mesh.data.materials.append(mat)
+
+    # set proper image as texture
+    for n in mat.node_tree.nodes:
+        if n.name == "Image Texture":
+            n.image = bpy.data.images["Image_"+name]
+
     # upscale & translate model
-    placeModel( context, bpy.context.object )
+    placeModel( context, mesh )
 
 def sanitizePath(context):    
     image_path = None
@@ -92,6 +119,8 @@ def sanitizePath(context):
         print( 'file name is empty')
         return None
     image_path = bpy.path.abspath(os.path.join(image_path))
+    if os.path.exists(image_path) == False:
+        return None
     return image_path
 
 def displayImagePreview(image_path):
@@ -168,7 +197,6 @@ class DiscretizeOperator(bpy.types.Operator):
             }
             response = requests.post('http://localhost:8080/discretize', json=json_data)
             if response.status_code == 200:
-
                 model = response.json()["value"]
                 resetStage()
                 displayGLB( context, model )
