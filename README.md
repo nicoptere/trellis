@@ -123,5 +123,11 @@ WindowManager.image = PointerProperty(name="image", type=Image)
 * remote server calls block the execution, even when using async calls.
 the workaround looks convoluted (modal & timers)
 
+* list a `struct` object's properties: 
+```python
+for p in object.bl_rna.properties.items():
+    print( p )
+```
+
 * server memory keeps inflating...
 
