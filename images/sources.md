@@ -22,6 +22,8 @@ I'll try to keep track of the exact references here, as of now, they mostly come
 
 * bob [![bob](./bob.jpg)](https://lexica.art/prompt/7e45b698-2a6d-4e18-a8b8-1fe997e18794)
 
+* moto [![moto](./moto.webp)](https://lexica.art/prompt/ca1014d6-9ada-4034-aaf0-cdf164b31903)
+
 * diorama [![diorama](./diorama.jpg)](https://lexica.art/prompt/da05c0a4-9283-47eb-89cc-9b7b5f7b723e)
 </div>
 
@@ -32,8 +34,6 @@ hamster https://civitai.com/images/50845478)
 scifi https://lexica.art/prompt/c48df098-ce5d-4198-98e0-2e0f2385d6f8
 
 boy https://lexica.art/prompt/ca4fa23b-a69f-41c5-809f-619bd684c6cb
-
-moto https://lexica.art/prompt/ca1014d6-9ada-4034-aaf0-cdf164b31903
 
 watercolour-castle https://lexica.art/prompt/9196aa95-71e0-44a0-9656-51b868f795f7
 
