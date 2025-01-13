@@ -4,7 +4,8 @@ addon to bind [TRELLIS](https://github.com/Microsoft/TRELLIS) to blender, it all
 
 this is an experimental **toy project**, mostly to learn how to create a Blender add-on, it will not be maintained or updated in a foreseable future.
 
-#### writing some [dev notes](#notes) as I go (things I learnt the hard way)
+I'm taking some notes about the [inputs, results & limitations](#input_results_limitations) and writing some [dev notess](#notes) as I go.
+
 
 ## ⚠️ pre-requisite ⚠️
 
@@ -50,26 +51,54 @@ then activate it if it doesn't start automatically. the panel should be availabl
 
 first, select an image from the image browser or drag drop an image file from your desktop or select an drag-dropped image. 
 
+### compute the point cloud
+
 then you can change the SLAT generation settings. they correspond to [these TRELLIS settings](https://github.com/microsoft/TRELLIS/blob/main/example.py#L23-L31). in doubt, leave them "as is".
 
 hitting **compute** will call the SLAT generation, this step is fast and will produce a Gaussian Splatting model that gives a good idea of the final result.
 
 ![gaussian](doc/gaussian.png)
 
+the SLAT `*.ply` file is saved next to the source image and can be viewed in a Gaussian Splatting viewer. I'd recommend [the SuperSplat online editor ](https://playcanvas.com/supersplat/editor) ([repo](https://github.com/playcanvas/supersplat)) to see the difference with the Blender preview!
+
 the second step is to discretize the Gaussian Splatting model, you can tweak the mesh **simplification ratio** and the model's **texture size**. higher simplification ratios compute much faster but produce 'blobby' results.
 
+### discretize
 hitting **discretize** will ... well ... discretize the Gaussian Splatting model and turn it into a triangular mesh. this step is slow, especially with low simplification ratios. it should produces something like this:
 ![discreet](doc/discreet.png)
 
 hitting discretize directly will run both the SLAT and the discretization steps.
 
-post process step:
-not sure if useful but the scripting layout of the blender file contains a decimate/triangulate modifier that can be ran to collapse coplanar faces.
+### decimate
+not sure if useful but the scripting layout of the blender file contains a decimate/triangulate modifier that can be ran to collapse coplanar faces. it works well on mechanical meshes.
 ![robot](doc/robot.png)
 
 
+# <a name="input_results_limitations">inputs, results, limitations</a>
+* the models sees "objects" rather than "environments", the input image should be thought of in terms of "turntable" rather than "360° panoramas" or "landscapes".
 
-# <a name="notes">#</a> dev notes, caveats etc.
+* salient details can lead to misinterpretation of the scene depth and create artificial "planes".
+
+* the most successful image represent a single, realistic subject, in whole ("from head to toes"), well lit with "sculptural" or "photographic" light. 
+
+* model struggles with "shortcuts", frontal poses and T-poses work better for characters.
+
+* scenes with effects like blur, bloom, DOF, bokehs, distance fog etc. will fail.
+
+* thin details (like hairs, feathers, lines ... ) and natural effects (mist, lightnings, steam, water ripples etc.) get obliterated.
+
+* the back of the meshes is usually darker and tend to lose details, often ending up completely black. 
+
+* 2D designs fail: comics, pixel art, flat design etc. don't work, probably due to the lack of "3D" depth  
+
+* mechanical objects work well if they're fully in the frame and show "as much as possible" of their inner details.
+
+* the uvs are islands on an atlas, they're scattered without semantic understanding yet have a good connectity. 
+
+* thanks to the UVs, the resulting meshes are **very resilient to aggressive decimation**.
+
+
+# <a name="notes"> dev notes, caveats etc.</a>
 
 * Blender runs its own Python version. a script / add-on is executed in the context of this Python environment. we can't install dependecies (pip) at runtime, anything else must run in separate Python installs/terminals on the system. an add-on can't run python script in separate terminals and comunication with servers is slow.
 
@@ -91,5 +120,8 @@ WindowManager.image = PointerProperty(name="image", type=Image)
 
 * accessing the `context` is still a mystery, need to dig further. an unavailable context blocks most operations.
 
-* remote servedr calls block the execution, even when using async calls.
+* remote server calls block the execution, even when using async calls.
 the workaround looks convoluted (modal & timers)
+
+* server memory keeps inflating...
+

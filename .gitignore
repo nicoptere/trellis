@@ -1,5 +1,6 @@
 ply_render.blend
 trellis-dev.blend
+tests
 *.blend1
 *.pickle
 *.ply
