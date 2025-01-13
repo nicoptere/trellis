@@ -4,7 +4,7 @@ addon to bind [TRELLIS](https://github.com/Microsoft/TRELLIS) to blender, it all
 
 this is an experimental **toy project**, mostly to learn how to create a Blender add-on, it will not be maintained or updated in a foreseable future.
 
-I'm taking some notes about the [inputs, results & limitations](#input_results_limitations) and writing some [dev notess](#notes) as I go.
+I'm taking some notes about the [inputs, results & limitations](#input_results_limitations) and writing some [dev notes](#notes) as I go.
 
 
 ## ⚠️ pre-requisite ⚠️
@@ -89,7 +89,7 @@ not sure if useful but the scripting layout of the blender file contains a decim
 
 * the back of the meshes is usually darker and tend to lose details, often ending up completely black. 
 
-* 2D designs fail: comics, pixel art, flat design etc. don't work, probably due to the lack of "3D" depth  
+* 2D designs fail: line art, comics, pixel art, flat design etc. don't work, probably due to the lack of "3D" depth informations.
 
 * mechanical objects work well if they're fully in the frame and show "as much as possible" of their inner details.
 
