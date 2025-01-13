@@ -36,10 +36,10 @@ class TRELLIS(bpy.types.Panel):
     bl_category = "TRELLIS"
 
     def checkGizmo(self, context):
-        gizmo = bpy.context.view_layer.objects.active
-        if hasattr(gizmo, "data"):
-            if hasattr(gizmo.data, "filepath" ):
-                return gizmo
+        active = bpy.context.view_layer.objects.active
+        if hasattr(active, "data"):
+            if hasattr(active.data, "filepath" ):
+                return active
         return None
     
     def draw(self, context):
@@ -82,8 +82,8 @@ class TRELLIS(bpy.types.Panel):
         # check if user clicked on an Empty object (a drag dropped image)
         gizmo = self.checkGizmo(context) 
         if gizmo is not None:
-            context.window_manager.gizmo  = gizmo
-            context.window_manager.image  = gizmo.data
+            context.window_manager.gizmo = gizmo
+            context.window_manager.image = gizmo.data
 
 
 
