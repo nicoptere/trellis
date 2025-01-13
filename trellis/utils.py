@@ -7,7 +7,7 @@ def clear():
     bpy.ops.object.delete(use_global=False)
 
 def resetStage():
-    
+    return 
     #camera
     bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, 0), rotation=(1.20079, -1.25822e-06, 0.872667), scale=(1, 1, 1))
     bpy.context.object.location[0] = -3
