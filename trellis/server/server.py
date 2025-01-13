@@ -112,6 +112,9 @@ def process( img, params = None ):
     print( '\t SLAT computed, saving pickled model under:', pickle_file )
     content = pack_state( gaussian, mesh, "1" )
     pickle.dump(content, open( pickle_file, "wb" ) )
+    del mesh
+    del content
+    del gaussian
     return ply_file
 
 
@@ -167,6 +170,8 @@ def optimize( img, params = None ):
         )
         glb.export(glb_file)
 
+    del mesh
+    del gaussian
     return glb_file
 
 
