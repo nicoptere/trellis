@@ -15,17 +15,15 @@ this means you need a beefy GPU with **a minimum of 16Go VRAM**, CUDA 11.8+.
 
 
 ### roadmap & TODO
-<ul>
-    <li><input type=checkbox disabled checked>bind Blender to a TRELLIS service running locally</input></li>
-    <li><input type=checkbox disabled checked>separate Gaussian Splatting generation from GLB discretization & optimization</input></li>
-    <li><input type=checkbox disabled checked>use drag & drop image to create a mesh in place</input></li>
-    <li><input type=checkbox disabled>versioning the files to compare different generation settings</input></li>
-    <li><input type=checkbox disabled>document results + screenrecordings</input></li>
-    <li><input type=checkbox disabled>try <a href="https://github.com/Stability-AI/stable-fast-3d">SF3D</a></input></li>
-    <li><input type=checkbox disabled>try <a href="https://github.com/Stability-AI/stable-point-aware-3d">SPAR3D</a></input></li>
-    <li><input type=checkbox disabled>add <a href="https://paperswithcode.com/task/3d-semantic-segmentation">semantic segmentation</a></input></li>
-    <li><input type=checkbox disabled>understand Blender scripting</input></li>
-</ul>
+- [x]bind Blender to a TRELLIS service running locally
+- [x]separate Gaussian Splatting generation from GLB discretization & optimization
+- [x]use drag & drop image to create a mesh in place
+- [ ]versioning the files to compare different generation settings
+- [ ]document results + screenrecordings
+- [ ]try <a href="https://github.com/Stability-AI/stable-fast-3d">SF3D</a>
+- [ ]try <a href="https://github.com/Stability-AI/stable-point-aware-3d">SPAR3D</a>
+- [ ]add <a href="https://paperswithcode.com/task/3d-semantic-segmentation">semantic segmentation</a>
+- [ ]understand Blender scripting
 
 ### start the server to compute TRELLIS files
 for many reasons, the TRELLIS computations are handled in a separate terminal.
