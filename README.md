@@ -9,10 +9,23 @@ I'm taking some notes about the [inputs, results & limitations](#input_results_l
 
 ## ⚠️ pre-requisite ⚠️
 
-### You need to install and set up [TRELLIS](https://github.com/Microsoft/TRELLIS) on your computer.
+### You need to install and set up [TRELLIS](https://github.com/Microsoft/TRELLIS) locally.
 
-this means you need a beefy GPU with a minimum of 16Go VRAM and CUDA installed.
+this means you need a beefy GPU with **a minimum of 16Go VRAM**, CUDA 11.8+.
 
+
+### roadmap & TODO
+<ul>
+    <li><input type=checkbox disabled checked>bind Blender to a TRELLIS service running locally</input></li>
+    <li><input type=checkbox disabled checked>separate Gaussian Splatting generation from GLB discretization & optimization</input></li>
+    <li><input type=checkbox disabled checked>use drag & drop image to create a mesh in place</input></li>
+    <li><input type=checkbox disabled>versioning the files to compare different generation settings</input></li>
+    <li><input type=checkbox disabled>document results + screenrecordings</input></li>
+    <li><input type=checkbox disabled>try <a href="https://github.com/Stability-AI/stable-fast-3d">SF3D</a></input></li>
+    <li><input type=checkbox disabled>try <a href="https://github.com/Stability-AI/stable-point-aware-3d">SPAR3D</a></input></li>
+    <li><input type=checkbox disabled>add <a href="https://paperswithcode.com/task/3d-semantic-segmentation">semantic segmentation</a></input></li>
+    <li><input type=checkbox disabled>understand Blender scripting</input></li>
+</ul>
 
 ### start the server to compute TRELLIS files
 for many reasons, the TRELLIS computations are handled in a separate terminal.
@@ -30,8 +43,13 @@ print( server_file )
 
 run the server in a separate terminal, for instance on Windows:
 ```shell
-python 'C:\Users\_USER_\AppData\Roaming\Blender Foundation\Blender\4.3\scripts\addons/trellis/server/server.py'
+python 'C:\Users\__USER__\AppData\Roaming\Blender Foundation\Blender\4.3\scripts\addons/trellis/server/server.py'
 ```
+then start Blender and open `trellis.blend` or if blender is available from the CLI:
+```shell
+blender .\trellis.blend -y
+```
+
 
 
 
@@ -98,7 +116,7 @@ not sure if useful but the scripting layout of the blender file contains a decim
 * thanks to the UVs, the resulting meshes are **very resilient to aggressive decimation**.
 
 
-# <a name="notes"> dev notes, caveats etc.</a>
+# <a name="notes">dev notes, caveats, tips etc.</a>
 
 * Blender runs its own Python version. a script / add-on is executed in the context of this Python environment. we can't install dependecies (pip) at runtime, anything else must run in separate Python installs/terminals on the system. an add-on can't run python script in separate terminals and comunication with servers is slow.
 
