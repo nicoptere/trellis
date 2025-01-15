@@ -20,8 +20,11 @@ this means you need a beefy GPU with **a minimum of 16Go VRAM**, CUDA 11.8+.
 - [x] use drag & drop image to create a mesh in place
 - [ ] versioning the files to compare different generation settings
 - [ ] document results + screenrecordings
-- [x] try <a href="https://github.com/Stability-AI/stable-fast-3d">SF3D</a>: more faithful to the source image, cubic UVs but very low quality geometry, poor novel view synthesis. 
-- [ ] try <a href="https://github.com/Stability-AI/stable-point-aware-3d">SPAR3D</a>
+- [x] try <a href="https://github.com/Stability-AI/stable-fast-3d">SF3D</a>: 
+    
+    more faithful to the source image, 
+    +1 for the "cubic" UVs but very low quality geometry, poor novel view synthesis. 
+- [x] try <a href="https://github.com/Stability-AI/stable-point-aware-3d">SPAR3D</a> same as SF3D (SPAR3D derieves from SF3D)
 - [ ] add <a href="https://paperswithcode.com/task/3d-semantic-segmentation">semantic segmentation</a>
 - [ ] understand Blender scripting
 
