@@ -40,3 +40,23 @@ watercolour-castle https://lexica.art/prompt/9196aa95-71e0-44a0-9656-51b868f795f
 girl https://civitai.com/images/50855669
 
 robot1 https://civitai.com/images/49923041
+
+isometric interior https://civitai.com/images/476272
+
+spider mech https://civitai.com/images/694508
+
+marine https://civitai.com/images/1585134
+
+3d ring https://unsplash.com/photos/a-red-and-orange-object-floating-in-the-air-5O7e8A4I8u0
+
+kiki https://unsplash.com/photos/a-small-black-and-brown-dog-sitting-on-its-hind-legs-hz_BchTSLX8
+
+building https://civitai.com/images/8557405
+
+camera https://civitai.com/images/20597973
+
+bug-mesh https://civitai.com/images/13556695
+
+pony https://civitai.com/images/13556724
+
+room https://civitai.com/images/1096324
