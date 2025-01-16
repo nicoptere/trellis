@@ -3,7 +3,7 @@ import requests
 import os 
 from math import pi
 from .utils import resetStage, clear
-
+from time import time
 def getParams( context ):
     return  {
                     "slat" : {
@@ -24,8 +24,6 @@ def getParams( context ):
 
 def placeModel( context, object ):
     gizmo = context.window_manager.gizmo
-    object.scale *= 2
-    object.location[2] = 1
     if gizmo is not None:
         s = gizmo.empty_display_size
         object.location = gizmo.location
@@ -57,14 +55,13 @@ def displayPLY( context, model_name ):
 
     # store ref to mesh   
     mesh = bpy.data.objects[name]
-
+    print( "displayPLY", name, mesh)
     #create geometry node
     geom_node = mesh.modifiers.new('geom_node',type='NODES')
 
     #Create a pointer to the node tree
     tree = bpy.data.node_groups[0]
-    group = bpy.data.node_groups
-    for g in group:
+    for g in bpy.data.node_groups:
         if g.name == "ply_geom_node":
             tree = g
         
@@ -88,6 +85,7 @@ def displayGLB( context, model ):
     bpy.ops.object.parent_clear(type='CLEAR')
 
     # find the mesh and rename it's geometry
+
     mesh = None
     for obj in objects:
         if obj.name == "geometry_0":
@@ -95,7 +93,7 @@ def displayGLB( context, model ):
             meshes[ "geometry_0" ].name = name
             mesh = obj
             mat = mesh.data.materials[0]
-            bpy.data.images["Image_0"].name = "Image_"+name
+            bpy.data.images["Image_0"].name = name + "_texture"
             break
     
     # assign custom shader 
@@ -106,7 +104,7 @@ def displayGLB( context, model ):
     # set proper image as texture
     for n in mat.node_tree.nodes:
         if n.name == "Image Texture":
-            n.image = bpy.data.images["Image_"+name]
+            n.image = bpy.data.images[name + "_texture"]
 
     # upscale & translate model
     placeModel( context, mesh )
@@ -124,8 +122,7 @@ def sanitizePath(context):
     return image_path
 
 def displayImagePreview(image_path):
-    clear()
-    bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 3, 2.5), rotation=(1.5708, 0, 0), scale=(1, 1, 1))
+    bpy.ops.object.empty_image_add(filepath=image_path, location=(0, 1, 1), rotation=(1.5708, 0, 0), scale=(.4, .4, 1))
     
 
 class ComputeOperator(bpy.types.Operator):
@@ -140,7 +137,9 @@ class ComputeOperator(bpy.types.Operator):
         print( "TRELLIS compute", image_path )
 
         # add an image placeholder
-        # displayImagePreview(image_path)
+        # gizmo = context.window_manager.gizmo
+        # if gizmo is None:
+        #     displayImagePreview(image_path)
 
         # check if file already exists        
         name = os.path.splitext(image_path)[0]
