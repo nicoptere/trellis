@@ -62,28 +62,31 @@ def unpack_state(state: dict) -> Tuple[Gaussian, edict, str]:
 def process( img, params = None ):
 
     # file names
-    name = os.path.splitext(img)[0]
-    ply_file = '%s.ply' % name
+    
+    path = os.path.splitext(img)[0]
+    name, ext  = os.path.splitext( os.path.basename(img) )
+    os.makedirs(path, exist_ok=True)
+
+    ply_file = '%s/%s-gaussian.ply' %  (path, name)
+    pickle_file = '%s/%s.pickle' %  (path, name)
     if os.path.exists( ply_file ) == True:
         return ply_file
     
-    pickle_file = '%s.pickle' % name
-
     gaussian = None
     mesh = None
     if  params is None:
         params = {
             'slat': {
                     'sparse': {'steps': 12, 'cfg_strength': 8.0}, 
-                    'slat': {'steps': 10, 'cfg_strength': 5.0}}, 
+                    'slat': {'steps': 10, 'cfg_strength': 3.0}}, 
             'glb': {
                 'simplify': 0.800000011920929, 'texture_size': 1024
                 }
             }
 
-    print( 'processing name:', name )
-    print( 'processing params:', params )
     print( 'computing SLAT' )
+    print( 'processing path:', path )
+    print( 'processing params:', params )
     # Load an image
     image = Image.open(img)
 
@@ -121,13 +124,16 @@ def process( img, params = None ):
 def optimize( img, params = None ):
     
     # file names
-    name = os.path.splitext(img)[0]
-    pickle_file = '%s.pickle' % name
-    glb_file = "%s.glb" % name
+    path = os.path.splitext(img)[0]
+    name, ext  = os.path.splitext( os.path.basename(img) )
+    os.makedirs(path, exist_ok=True)
+
+    glb_file = '%s/%s.glb' % (path, name)
+    pickle_file = '%s/%s.pickle' %  (path, name)
     if os.path.exists( glb_file ) == True:
         return glb_file
 
-    print( 'processing name:', name )
+    print( 'processing name:', path )
     print( 'processing params:', params )
 
     # (debug) bail out if model not initialized 
@@ -192,7 +198,7 @@ app = Flask(__name__)
 def check():
     values = request.get_json()
     print( "received", values['value'] )
-    
+    time.sleep(2)
     print( "finished" )
     return  {"value": 'ok'}, 200
 
