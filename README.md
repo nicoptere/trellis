@@ -7,6 +7,32 @@ this is an experimental **toy project**, mostly to learn how to create a Blender
 I'm taking some notes about the [inputs, results & limitations](#input_results_limitations) and writing some [dev notes](#notes) as I go.
 
 
+### roadmap & things
+- [x] bind Blender to a TRELLIS service running locally
+- [x] separate Gaussian Splatting generation from GLB discretization & optimization
+- [x] use drag & drop image to create a mesh in place
+- [ ] versioning the files to compare different generation settings
+- [ ] document results + screenrecordings
+- [x] tried <a href="https://github.com/Stability-AI/stable-fast-3d">SF3D</a> and <a href="https://github.com/Stability-AI/stable-point-aware-3d">SPAR3D</a> instead of TRELLIS: 
+    - pros 
+        - initial pose is more faithful to the source image 
+        - nice "cubic" UVs trick that produces a human readble UV map
+        - low-ish memory footprint ; it peaked at 12Go though discarding all the RTX 20XX series
+        - tries to "unlight" the diffuse texture
+        - very fast ( ~5s from image to model)
+    - cons
+        - produces a very crispy object, disjoint with lots of floaters
+        - low quality discretization ; they use an intentionnaly low amount of particles 
+        - poor novel view synthesis: the sides and the back of objects is notoriously mushy, often ending up as noise 
+- [ ] improve the resulting mesh: the resulting meshes are disconnected patches, trying to imporve the toppology 
+    - [x] tried Open3d's <a href="https://www.open3d.org/docs/release/tutorial/geometry/mesh.html#Connected-components">connected components</a> only to realize [how fragmented the regions were](https://bsky.app/profile/nicoptere.bsky.social/post/3lfq4r436222s)
+        - [ ] TODO: add operator call to display the connected components
+    - [x] tried <a href="https://github.com/SarahWeiii/CoACD/tree/main">Approximate Convex Decomposition for 3D Meshes with Collision-Aware Concavity and Tree Search</a> which produces <a kref="https://bsky.app/profile/nicoptere.bsky.social/post/3lfspmzwlzs2d">interesting results</a>, need to assign patches to hulls.
+    - [ ] try <a href="https://github.com/rkjones4/SHRED">SHRED</a>
+    - [ ] add <a href="https://paperswithcode.com/task/3d-semantic-segmentation">semantic segmentation</a> involves custom training sets and intermediate data formats.
+- [ ] understand Blender scripting
+
+
 ## ⚠️ pre-requisite ⚠️
 
 ### You need to install and set up [TRELLIS](https://github.com/Microsoft/TRELLIS) locally.
@@ -14,19 +40,19 @@ I'm taking some notes about the [inputs, results & limitations](#input_results_l
 this means you need a beefy GPU with **a minimum of 16Go VRAM**, CUDA 11.8+.
 
 
-### roadmap & TODO
-- [x] bind Blender to a TRELLIS service running locally
-- [x] separate Gaussian Splatting generation from GLB discretization & optimization
-- [x] use drag & drop image to create a mesh in place
-- [ ] versioning the files to compare different generation settings
-- [ ] document results + screenrecordings
-- [x] try <a href="https://github.com/Stability-AI/stable-fast-3d">SF3D</a>: 
-    
-    more faithful to the source image, 
-    +1 for the "cubic" UVs but very low quality geometry, poor novel view synthesis. 
-- [x] try <a href="https://github.com/Stability-AI/stable-point-aware-3d">SPAR3D</a> same as SF3D (SPAR3D derieves from SF3D)
-- [ ] add <a href="https://paperswithcode.com/task/3d-semantic-segmentation">semantic segmentation</a>
-- [ ] understand Blender scripting
+## installation
+
+download or clone this repo "somewhere".
+
+open Blender and install the add-on from the **edit > preferences > addons menu**, choose install from disk and select the **trellis.zip** file from "somewhere". 
+
+![install](doc/install.png)
+
+then activate it if it doesn't start automatically. the panel should be available under the **'item', 'tool' 'view'** tools.
+
+![panel](doc/panel.png)
+
+## usage
 
 ### start the server to compute TRELLIS files
 for many reasons, the TRELLIS computations are handled in a separate terminal.
@@ -52,23 +78,7 @@ blender .\trellis.blend -y
 ```
 
 
-
-
-## install
-
-download or clone this repo "somewhere".
-
-open Blender and install the add-on from the **edit > preferences > addons menu**, choose install from disk and select the **trellis.zip** file from "somewhere". 
-
-![install](doc/install.png)
-
-then activate it if it doesn't start automatically. the panel should be available under the **'item', 'tool' 'view'** tools.
-
-![panel](doc/panel.png)
-
-## usage
-
-first, select an image from the image browser or drag drop an image file from your desktop or select an drag-dropped image. 
+in Blender, first, select an image from the image browser or drag drop an image file from your desktop or select an drag-dropped image. 
 
 ### compute the point cloud
 
@@ -94,6 +104,9 @@ not sure if useful but the scripting layout of the blender file contains a decim
 
 
 # <a name="input_results_limitations">inputs, results, limitations</a>
+
+* use larg images: resized images tend to be misinterpreted. 
+
 * the models sees "objects" rather than "environments", the input image should be thought of in terms of "turntable" rather than "360° panoramas" or "landscapes".
 
 * salient details can lead to misinterpretation of the scene depth and create artificial "planes".
