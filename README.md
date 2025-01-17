@@ -6,13 +6,18 @@ this is an experimental **toy project**, mostly to learn how to create a Blender
 
 I'm taking some notes about the [inputs, results & limitations](#input_results_limitations) and writing some [dev notes](#notes) as I go.
 
+## ⚠️ pre-requisite ⚠️
+
+### You need to install and set up [TRELLIS](https://github.com/Microsoft/TRELLIS) locally.
+
+this means you need a beefy GPU with **a minimum of 16Go VRAM**, CUDA 11.8+.
+
+
 
 ### roadmap & things
 - [x] bind Blender to a TRELLIS service running locally
 - [x] separate Gaussian Splatting generation from GLB discretization & optimization
 - [x] use drag & drop image to create a mesh in place
-- [ ] versioning the files to compare different generation settings
-- [ ] document results + screenrecordings
 - [x] tried <a href="https://github.com/Stability-AI/stable-fast-3d">SF3D</a> and <a href="https://github.com/Stability-AI/stable-point-aware-3d">SPAR3D</a> instead of TRELLIS: 
     - pros 
         - initial pose is more faithful to the source image 
@@ -32,12 +37,11 @@ I'm taking some notes about the [inputs, results & limitations](#input_results_l
     - [ ] add <a href="https://paperswithcode.com/task/3d-semantic-segmentation">semantic segmentation</a> involves custom training sets and intermediate data formats.
 - [ ] understand Blender scripting
 
-
-## ⚠️ pre-requisite ⚠️
-
-### You need to install and set up [TRELLIS](https://github.com/Microsoft/TRELLIS) locally.
-
-this means you need a beefy GPU with **a minimum of 16Go VRAM**, CUDA 11.8+.
+TOOD 
+- [ ] understand Blender scripting
+- [ ] versioning the files to compare different generation settings
+- [ ] iron out the naming to re-generate a mesh
+- [ ] document results + screenrecordings
 
 
 ## installation
@@ -105,7 +109,7 @@ not sure if useful but the scripting layout of the blender file contains a decim
 
 # <a name="input_results_limitations">inputs, results, limitations</a>
 
-* use larg images: resized images tend to be misinterpreted. 
+* use large images: smaller images tend to be misinterpreted. 
 
 * the models sees "objects" rather than "environments", the input image should be thought of in terms of "turntable" rather than "360° panoramas" or "landscapes".
 
@@ -119,7 +123,7 @@ not sure if useful but the scripting layout of the blender file contains a decim
 
 * thin details (like hairs, feathers, lines ... ) and natural effects (mist, lightnings, steam, water ripples etc.) get obliterated.
 
-* the back of the meshes is usually darker and tend to lose details, often ending up completely black. 
+* the back of the meshes is [usually darker](https://github.com/microsoft/TRELLIS/issues/124) and tend to lose details, often ending up completely black. 
 
 * 2D designs fail: line art, comics, pixel art, flat design etc. don't work, probably due to the lack of "3D" depth informations.
 
