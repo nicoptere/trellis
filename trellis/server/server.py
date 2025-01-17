@@ -75,14 +75,14 @@ def process( img, params = None ):
     gaussian = None
     mesh = None
     if  params is None:
-        params = {
+        params = editc( {
             'slat': {
                     'sparse': {'steps': 12, 'cfg_strength': 8.0}, 
                     'slat': {'steps': 10, 'cfg_strength': 3.0}}, 
             'glb': {
-                'simplify': 0.800000011920929, 'texture_size': 1024
+                'simplify': .95, 'texture_size': 1024
                 }
-            }
+            } )
 
     print( 'computing SLAT' )
     print( 'processing path:', path )
@@ -142,14 +142,14 @@ def optimize( img, params = None ):
         return glb_file
     
     if  params is None:
-        params = {
+        params = edict( {
             'slat': {
                     'sparse': {'steps': 12, 'cfg_strength': 8.0}, 
                     'slat': {'steps': 10, 'cfg_strength': 5.0}}, 
             'glb': {
-                'simplify': 0.800000011920929, 'texture_size': 1024
+                'simplify': .95, 'texture_size': 1024
                 }
-            }
+            } )
 
     gaussian = None
     mesh = None
