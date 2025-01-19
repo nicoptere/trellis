@@ -8,6 +8,8 @@ from skimage.morphology import medial_axis, skeletonize
 from collections import defaultdict
 from scipy.spatial import Delaunay
 from tqdm import tqdm
+import skeletor as sk
+
 
 def alpha_shape_3D(pos, alpha):
     """
@@ -54,8 +56,6 @@ def alpha_shape_3D(pos, alpha):
     Vertices = np.unique(Edges)
     return Vertices,Edges,Triangles
 
-
-
 def clamp( value, mini=0, maxi=1 ):
     return min( maxi, max( value, mini ) )
 
@@ -88,7 +88,6 @@ def is_inside(point, mesh, direction=np.array([1, 0, 0]), tol=1e-5):
     )
     count = len(intersections) % 2
     return count % 2 == 1
-
 
 def snap_vertex( v, dim ):
 
@@ -129,34 +128,47 @@ def adjacency( voxels, x, y, z, diagonals=False ):
 
 
 # test 
-name = "castle"
+name = "bob"
 dim = 32
-alpha = 0.5
+alpha = 1.4
 
 mesh = tm.load_mesh('C:/Users/barra/Documents/blender/models/%s/%s.glb' % (name, name), process=False )
-
 mesh = mesh.geometry['geometry_0']
-# try to fix mesh
-# mesh.process()
-# # mesh = mesh.simplify_quadric_decimation(face_count=len( mesh.faces )//4 * 3 )
-# 
-# mesh.fill_holes()
-# mesh.merge_vertices()
+
+
+
 
 vs = mesh.vertices
+mins, maxs, bb = bounding_box(vs) 
 
+mesh.fix_normals()
 while( mesh.is_watertight == False ):
     print( "computing alpha:", alpha )
     _, _, faces = alpha_shape_3D(vs, alpha * .1 )
     mesh.faces = faces
     mesh.fix_normals()
     alpha += .1
-
-# print( -mesh.face_normals )
-# mesh.show()
+mesh.merge_vertices()
+mesh.show()
 # quit()
 
 
+# mesh = fixed
+skel = sk.skeletonize.by_vertex_clusters(mesh, sampling_dist=0.01)
+# skel = sk.skeletonize.by_wavefront(mesh, waves=3, step_size=1)
+# skel = sk.skeletonize.by_wavefront(mesh, waves=3, step_size=1)
+print( "skel",skel)
+skel = sk.post.clean_up(skel, inplace=True)
+# skel = sk.post.smooth()
+sk.post.radii(skel, method="knn")
+
+# print( "skel",skel)
+# scene = tm.Scene([mesh, skel])
+# scene.show( line_settings={'point_size': 10, "line_width":1}, flags={'wireframe': True} )
+skel.show(mesh=True, flags={'wireframe': True})
+quit()
+
+# 
 voxel_file = "%s-%s-%s.npy" % (name,dim, alpha)
 if os.path.exists( voxel_file )==False:
 
@@ -166,7 +178,6 @@ if os.path.exists( voxel_file )==False:
     pos = []
     col = []
     margin = 0.01
-    mins, maxs, _ = bounding_box(vs) 
     mi_x = mins[0] - margin
     mi_y = mins[1] - margin
     mi_z = mins[2] - margin
@@ -216,33 +227,28 @@ for v in tqdm( vs ):
 print( colors )
 gaussian = tm.PointCloud(vs, colors=colors)
 gaussian.show(line_settings={'point_size': 10})
-
 # quit()
 """
 
-"""
-dim = 16
-voxels = np.zeros( (dim, dim, dim), dtype=np.int8)
-for v in vs:
-    # x, y, z = snap_vertex(v, dim)
-    voxels[ x, y, z ] = 1
-"""
 
     
 #  display
 ax = plt.figure().add_subplot(projection='3d')
-mi, ma, size = bounding_box(vs)
-ax.set_box_aspect(size)
-
-# render voxels
-# x, z, y = voxels.nonzero()
-# ax.scatter(x, y, z, c=y, s=10, alpha=.35, edgecolors='none')
+ax.set_box_aspect(bb)
 
 # compute and render skeleton
 skel = skeletonize(voxels)
 x, z, y = np.where( skel, 1, 0 ).nonzero()
 ax.scatter(x, y, z, c='orange', s=10, alpha=1, edgecolors='none')
 plt.show()
+
+
+
+
+
+# render voxels
+# x, z, y = voxels.nonzero()
+# ax.scatter(x, y, z, c=y, s=10, alpha=.35, edgecolors='none')
 
 # todo visualize the skeleton in GL
 
