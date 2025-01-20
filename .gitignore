@@ -6,4 +6,5 @@ tests
 *.ply
 *.glb
 models
+.topf
 __pychache__
