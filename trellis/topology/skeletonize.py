@@ -128,19 +128,100 @@ def adjacency( voxels, x, y, z, diagonals=False ):
 
 
 # test 
-name = "bob"
+name = "spider-mech"
+# name = "castle"
 dim = 32
 alpha = 1.4
+
+"""
+import pc_skeletor as pcs
+pcd = pcs.load_point_cloud('C:/Users/barra/Documents/blender/models/%s/%s-gaussian.ply' % (name, name))
+topology = pcs.extract_skeleton(pcd)
+"""
+
+import open3d as o3d
+
+# Load a point cloud
+pcd_path = '"../../models/%s/%s-gaussian.ply' % (name, name)
+pcd = o3d.io.read_point_cloud(pcd_path)
+
+
+path = '"../../models/%s/%s.glb' % (name, name)
+mesh = o3d.io.read_triangle_mesh( path )
+
+
+gaussian = True
+if gaussian == False:
+  pcd.points =  o3d.utility.Vector3dVector(np.asarray(mesh.vertices ))
+
+# Estimate normals
+# pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+
+# Cluster the point cloud using DBSCAN
+labels = pcd.cluster_dbscan(eps=0.001, min_points=10, print_progress=True)
+# labels = pcd.cluster_dbscan(eps=0.0001, min_points=5, print_progress=True)
+
+# Get unique labels and count the number of clusters
+total_labels = np.unique(labels)
+num_clusters = len(total_labels) - 1  # Exclude the noise label (-1)
+print( total_labels, num_clusters )
+
+
+inout = []
+labels = np.array( labels )
+for i in tqdm( range(num_clusters) ):
+    
+    indices = np.where( labels == i )[0]
+    if len( indices )==0:
+      continue
+    cluster_points = pcd.select_by_index(indices)
+    
+    pos = np.asarray( cluster_points.points )
+    
+    if gaussian:
+      pos = pos[:, [0, 2, 1]]
+      pos[:,2] *= -1
+
+    # print( i, len( indices ) )
+    color = [255,0,0]
+    inout.append(tm.PointCloud(pos, colors=np.full((len( pos ), 3 ), color)))
+
+
+# Load the mesh file (replace with your actual file path)
+mesh = tm.load_mesh(path)
+
+scene = tm.Scene([mesh, inout])
+scene.show( line_settings={'point_size': 10, "line_width":.5}, flags={'wireframe': True} )
+
+
+quit()
 
 mesh = tm.load_mesh('C:/Users/barra/Documents/blender/models/%s/%s.glb' % (name, name), process=False )
 mesh = mesh.geometry['geometry_0']
 
+"""
+# pc-skeletor
+from pc_skeletor import SLBC
 
+s_lbc = SLBC(point_cloud={'trunk': pcd_trunk, 'branches': pcd_branch},
+             semantic_weighting=30,
+             down_sample=0.008,
+             debug=True)
+s_lbc.extract_skeleton()
+s_lbc.extract_topology()
 
+# Debug/Visualization
+s_lbc.visualize()
+s_lbc.show_graph(s_lbc.skeleton_graph)
+s_lbc.show_graph(s_lbc.topology_graph)
+s_lbc.export_results('./output')
+s_lbc.animate(init_rot=np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]), steps=300, output='./output')
+
+"""
 
 vs = mesh.vertices
 mins, maxs, bb = bounding_box(vs) 
-
+# concave hull
 mesh.fix_normals()
 while( mesh.is_watertight == False ):
     print( "computing alpha:", alpha )
